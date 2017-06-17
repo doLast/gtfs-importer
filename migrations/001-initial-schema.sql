@@ -114,8 +114,7 @@ CREATE TABLE "trips" (
 	 "wheelchair_accessible" integer,
 	 "bikes_allowed" integer,
 	PRIMARY KEY("trip_id"),
-	FOREIGN KEY ("route_id") REFERENCES "routes" ("route_id") ON DELETE CASCADE ON UPDATE CASCADE,
-	FOREIGN KEY ("service_id") REFERENCES "calendar" ("service_id") ON DELETE CASCADE ON UPDATE CASCADE
+	FOREIGN KEY ("route_id") REFERENCES "routes" ("route_id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- ----------------------------
