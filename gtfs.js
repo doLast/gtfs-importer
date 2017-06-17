@@ -46,12 +46,47 @@ exports.importFromGtfsPath = function (gtfsPath) {
             rows.push(data);
           })
           .on('end', function(){
-            var queryStr = squel.insert().into(filename).setFieldsRows(rows).toString();
-            console.log(queryStr);
-            db.run(queryStr, function (err) {
-              console.log('done', this.lastID, this.changes);
-              resolve(db);
-            });
+            if (filename === 'stop_times') {
+              rows.forEach((row) => {
+                row.arrival_time = row.arrival_time.replace(/:/g, '');
+                row.departure_time = row.departure_time.replace(/:/g, '');
+              });
+            }
+
+            // stops.txt has entries with `stop_id` is not Int, so insert one by one.
+            if (filename !== 'stops') {
+              return resolve(new Promise(function (resolve, reject) {
+                var queryStr = squel.insert({
+                  replaceSingleQuotes: true,
+                }).into(filename).setFieldsRows(rows).toString();
+                console.log(queryStr);
+                db.run(queryStr, function (err) {
+                  if (!err) {
+                    return resolve(db);
+                  }
+                  return reject(err);
+                });
+              }));
+            }
+
+            resolve(rows.reduce((promise, row) => {
+              return promise.then(() => new Promise(function (resolve, reject) {
+                var queryStr = squel.insert({
+                  replaceSingleQuotes: true,
+                }).into(filename).setFields(row).toString();
+                console.log(queryStr);
+                db.run(queryStr, function (err) {
+                  if (!err) {
+                    return resolve(db);
+                  }
+                  if (err.code === 'SQLITE_MISMATCH') {
+                    console.log('SKIP db type mismatch');
+                    return resolve(db);
+                  }
+                  return reject(err);
+                });
+              }));
+            }, Promise.resolve(db)));
           });
       });
     });
