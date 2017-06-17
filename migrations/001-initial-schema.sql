@@ -95,8 +95,7 @@ CREATE TABLE "stops" (
 	 "parent_station" integer,
 	 "stop_timezone" text,
 	 "wheelchair_boarding" integer,
-	PRIMARY KEY("stop_id"),
-	FOREIGN KEY ("parent_station") REFERENCES "stops" ("stop_id") ON DELETE CASCADE ON UPDATE CASCADE
+	PRIMARY KEY("stop_id")
 );
 
 -- ----------------------------
