@@ -5,6 +5,7 @@ var fs = require('fs');
 var Promise = require('promise');
 var sqlite3 = require('sqlite3').verbose();
 var csv = require('fast-csv');
+var squel = require('squel');
 
 var GTFS_FILENAMES = ['calendar', 'calendar_dates', 'routes', 'stops', 'trips', 'stop_times', 'shapes'];
 var GTFS_FILE_EXTENTION_NAME = 'txt';
@@ -35,16 +36,22 @@ exports.importFromGtfsPath = function (gtfsPath) {
       }
 
       return new Promise(function (resolve, reject) {
+        var rows = [];
+
         csv
           .fromPath(csvPath, {
             headers: true,
           })
           .on('data', function(data){
-             console.log(data);
+            rows.push(data);
           })
           .on('end', function(){
-             console.log('done');
-             resolve(db);
+            var queryStr = squel.insert().into(filename).setFieldsRows(rows).toString();
+            console.log(queryStr);
+            db.run(queryStr, function (err) {
+              console.log('done', this.lastID, this.changes);
+              resolve(db);
+            });
           });
       });
     });
