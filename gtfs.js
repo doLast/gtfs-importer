@@ -9,20 +9,23 @@ var squel = require('squel');
 
 var GTFS_FILENAMES = ['calendar', 'calendar_dates', 'routes', 'stops', 'trips', 'stop_times', 'shapes'];
 var GTFS_FILE_EXTENTION_NAME = 'txt';
+var SQLITE_EXTENTION_NAME = 'sqlite';
 
-
-var db = new sqlite3.Database(path.join(process.cwd(), '/gtfs.sqlite'));
-var migrationSql = fs.readFileSync(path.join(process.cwd(), '/migrations/001-initial-schema.sql'), 'utf-8');
-var dbPromise = new Promise(function (resolve, reject) {
-  db.exec(migrationSql, function (err) {
-    if (err) {
-      reject(err);
-    }
-    resolve(db);
+function getDb(dbName) {
+  var db = new sqlite3.Database(path.join(process.cwd(), `/${dbName}.${SQLITE_EXTENTION_NAME}`));
+  var migrationSql = fs.readFileSync(path.join(process.cwd(), '/migrations/001-initial-schema.sql'), 'utf-8');
+  var dbPromise = new Promise(function (resolve, reject) {
+    db.exec(migrationSql, function (err) {
+      if (err) {
+        reject(err);
+      }
+      resolve(db);
+    });
   });
-});
+  return dbPromise;
+}
 
-exports.importFromGtfsPath = function (gtfsPath) {
+exports.importFromGtfsPath = function (gtfsPath, dbName) {
   console.log('IMPORTING FROM', gtfsPath);
 
   return GTFS_FILENAMES.reduce((promise, filename) => {
@@ -94,7 +97,7 @@ exports.importFromGtfsPath = function (gtfsPath) {
           });
       });
     });
-  }, dbPromise).catch((err) => {
+  }, getDb(dbName)).catch((err) => {
     console.log('FAIL', err);
   });
 };
