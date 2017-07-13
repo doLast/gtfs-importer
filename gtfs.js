@@ -46,6 +46,10 @@ exports.importFromGtfsPath = function (gtfsPath) {
             rows.push(data);
           })
           .on('end', function(){
+            if (!rows.length) {
+              return resolve(db);
+            }
+
             if (filename === 'stop_times') {
               rows.forEach((row) => {
                 row.arrival_time = row.arrival_time.replace(/:/g, '');
